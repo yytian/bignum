@@ -1,0 +1,8 @@
+[package]
+name = "bigmult"
+version = "0.1.0"
+authors = ["Jim Tian <yytian@uwaterloo.ca>"]
+
+[dependencies]
+rand = "0.3"
+rayon = "0.4.2"
