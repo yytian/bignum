@@ -1,6 +1,7 @@
 extern crate rand;
 
 mod types;
+mod basic_ops;
 
 use types::Bignum;
 

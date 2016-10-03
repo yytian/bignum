@@ -1,19 +1,41 @@
-enum Sign {
-    Nonnegative,
-    Negative,
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Sign {
+    Nonnegative = 1,
+    Negative = -1,
 }
 
 use self::Sign::*;
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct Bignum {
-    parts: Vec<u64>, // Least significant digit at leftmost index
-    sign: Sign,
+    pub parts: Vec<u64>, // Least significant digit at leftmost index
+    pub sign: Sign,
 }
 
 #[derive(Debug)]
 pub struct ParseBignumError;
 
-const BASE: u64 = 10;
+pub const BASE: u64 = 10;
+
+fn skip_leading_zeroes(s: &str) -> &str {
+    let mut chars = s.chars();
+    let mut first_nonzero_index = 0;
+
+    loop {
+        let c = chars.next();
+        if let Some('0') = c {
+            first_nonzero_index += 1;
+        } else {
+            break;
+        }
+    }
+
+    if first_nonzero_index >= s.len() {
+        first_nonzero_index = s.len() - 1;
+    }
+
+    &s[first_nonzero_index..]
+}
 
 impl Bignum {
     pub fn from_string(input_str: &str) -> Result<Self, ParseBignumError> {
@@ -26,7 +48,8 @@ impl Bignum {
                 sign: Negative,
             })
         }
-        else {
+        else {               
+            // TODO: Check for invalid input
             Ok(Bignum {
                 parts: Bignum::string_to_parts(&input_str[..]),
                 sign: Nonnegative,
@@ -35,8 +58,9 @@ impl Bignum {
     }
 
     fn string_to_parts(input_string: &str) -> Vec<u64> {
-        let mut parts = Vec::with_capacity(input_string.len());
-        for c in input_string.chars().rev() {
+        let s = skip_leading_zeroes(input_string);
+        let mut parts = Vec::with_capacity(s.len());
+        for c in s.chars().rev() {
             parts.push(c.to_digit(BASE as u32).unwrap() as u64);
         }
         parts
@@ -54,36 +78,18 @@ impl Bignum {
         let rest = self.parts.iter().rev().map(Bignum::to_utf8).collect::<String>();
         prefix + &rest
     }
-
-    pub fn long_mult(&self, other: &Bignum) -> Bignum {
-        // https://en.wikipedia.org/wiki/Multiplication_algorithm#Long_multiplication
-        let p = self.parts.len();
-        let q = other.parts.len();
-        let mut product = Bignum {
-            sign: match (&self.sign, &other.sign) {
-                (&Nonnegative, &Nonnegative) => Nonnegative,
-                (&Nonnegative, &Negative) => Negative,
-                (&Negative, &Nonnegative) => Negative,
-                (&Negative, &Negative) => Nonnegative,
-            },
-            parts: vec!(0; p + q),
-        };
+/*
+    pub fn karatsuba_mult(a: &Bignum, b: &Bignum) -> Bignum {
+        // https://en.wikipedia.org/wiki/Karatsuba_algorithm#Basic_step
+        // xy = (b^2 + b)x_1y_1 - b(x_1 - x_0)(y_1 - y_0) + (b + 1)x_0y_0
+        // where b = B^m
         
-        for b_i in 0..q {
-            let mut carry = 0;
-            for a_i in 0..p {
-                product.parts[a_i + b_i] += carry + self.parts[a_i] * other.parts[b_i];
-                carry = product.parts[a_i + b_i] / BASE;
-                product.parts[a_i + b_i] = product.parts[a_i + b_i] % BASE;
-            }
-            product.parts[b_i + p] += carry;
-        }
-        product
     }
+*/
 }
 
 #[test]
-fn type_conversions() {
+fn type_conversion_test() {
     let examples = vec!("0", "1", "-1", "-12345", "952892589210459282926222035");
     for string_rep in examples {
         let big = Bignum::from_string(string_rep).unwrap();
@@ -92,10 +98,9 @@ fn type_conversions() {
 }
 
 #[test]
-fn long_mult_test() {
-    let num1 = Bignum::from_string("123456789").unwrap();
-    let num2 = Bignum::from_string("987654321").unwrap();
-    let product = num1.long_mult(&num2);
-    let string_rep = product.to_string();
-    assert_eq!(string_rep, "121932631112635269");
+fn equality_test() {
+    assert!(Bignum::from_string("123").unwrap() == Bignum::from_string("123").unwrap());
+    assert!(Bignum::from_string("123").unwrap() != Bignum::from_string("-123").unwrap());
+    assert!(Bignum::from_string("123").unwrap() != Bignum::from_string("124").unwrap());
+    // TODO: check for leading zeroes
 }
