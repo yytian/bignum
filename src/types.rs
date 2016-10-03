@@ -31,10 +31,10 @@ fn skip_leading_zeroes(s: &str) -> &str {
     }
 
     if first_nonzero_index >= s.len() {
-        first_nonzero_index = s.len() - 1;
+        "0"
+    } else {
+        &s[first_nonzero_index..]
     }
-
-    &s[first_nonzero_index..]
 }
 
 impl Bignum {
@@ -43,31 +43,30 @@ impl Bignum {
             Err(ParseBignumError)
         }
         else if input_str.starts_with("-") {
-            Ok(Bignum {
-                parts: Bignum::string_to_parts(&input_str[1..]),
+            Bignum::string_to_parts(&input_str[1..]).map(|parts| Bignum {
+                parts: parts,
                 sign: Negative,
             })
         }
-        else {               
-            // TODO: Check for invalid input
-            Ok(Bignum {
-                parts: Bignum::string_to_parts(&input_str[..]),
+        else {
+            Bignum::string_to_parts(&input_str[..]).map(|parts| Bignum {
+                parts: parts,
                 sign: Nonnegative,
             })
         }
     }
 
-    fn string_to_parts(input_string: &str) -> Vec<u64> {
+    fn string_to_parts(input_string: &str) -> Result<Vec<u64>, ParseBignumError> {
         let s = skip_leading_zeroes(input_string);
         let mut parts = Vec::with_capacity(s.len());
         for c in s.chars().rev() {
-            parts.push(c.to_digit(BASE as u32).unwrap() as u64);
+            parts.push(c as u64 - '0' as u64);
         }
-        parts
+        Ok(parts)
     }
 
     fn to_utf8(part: &u64) -> char {
-        ::std::char::from_u32(*part as u32 + '0' as u32).unwrap()
+        ::std::char::from_u32((*part + '0' as u64) as u32).unwrap()
     }
 
     pub fn to_string(&self) -> String {
@@ -76,7 +75,8 @@ impl Bignum {
             Nonnegative => "".to_string(),
         };
         let rest = self.parts.iter().rev().map(Bignum::to_utf8).collect::<String>();
-        prefix + &rest
+        // TODO: Trim leading zeroes in intermediate forms?
+        skip_leading_zeroes(&(prefix + &rest)).to_owned()
     }
 /*
     pub fn karatsuba_mult(a: &Bignum, b: &Bignum) -> Bignum {

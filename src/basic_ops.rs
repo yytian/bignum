@@ -69,13 +69,13 @@ impl Ord for Bignum {
 }
 
 impl Bignum {
-    pub fn add(a: &Bignum, b: &Bignum) -> Bignum {
-        Bignum::from_string("0").unwrap()
-    }
+    // pub fn add(a: &Bignum, b: &Bignum) -> Bignum {
+    //     Bignum::from_string("0").unwrap()
+    // }
     
-    pub fn sub(a: &Bignum, b: &Bignum) -> Bignum {
-        Bignum::from_string("0").unwrap()
-    }
+    // pub fn sub(a: &Bignum, b: &Bignum) -> Bignum {
+    //     Bignum::from_string("0").unwrap()
+    // }
     
     pub fn long_mult(a: &Bignum, b: &Bignum) -> Bignum {
         // https://en.wikipedia.org/wiki/Multiplication_algorithm#Long_multiplication
@@ -129,6 +129,6 @@ fn comparison_test() {
 
 #[test]
 fn long_mult_test() {
-    let product = try_with_strs(Bignum::long_mult, "123456789", "987654321");
-    assert_eq!(product, "121932631112635269");
+    assert_eq!(try_with_strs(Bignum::long_mult, "2", "2"), "4");
+    assert_eq!(try_with_strs(Bignum::long_mult, "123456789", "987654321"), "121932631112635269");
 }
