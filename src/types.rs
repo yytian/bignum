@@ -15,7 +15,7 @@ pub struct Bignum {
 #[derive(Debug)]
 pub struct ParseBignumError;
 
-pub const BASE: u64 = 10;
+pub const BASE: u64 = 64;
 
 fn skip_leading_zeroes(s: &str) -> &str {
     let mut chars = s.chars();
@@ -35,6 +35,14 @@ fn skip_leading_zeroes(s: &str) -> &str {
     } else {
         &s[first_nonzero_index..]
     }
+}
+
+fn char_to_digit(c: char) -> u64 {
+    c as u64 - '0' as u64
+}
+
+fn digit_to_char(part: u64) -> char {
+    ::std::char::from_u32((part + '0' as u64) as u32).unwrap()
 }
 
 impl Bignum {
@@ -59,24 +67,49 @@ impl Bignum {
     fn string_to_parts(input_string: &str) -> Result<Vec<u64>, ParseBignumError> {
         let s = skip_leading_zeroes(input_string);
         let mut parts = Vec::with_capacity(s.len());
-        for c in s.chars().rev() {
-            parts.push(c as u64 - '0' as u64);
+
+        let mut quotient: String = s.to_string();
+        let mut remainder: u64 = 0; // Should be < 64
+
+        while quotient != "0" {
+            // Repeated long division by 64
+            let mut next = String::with_capacity(quotient.len());
+            let mut carry = 0;
+            
+            for c in quotient.chars() {
+                let digit = char_to_digit(c);
+                carry = carry * 10 + digit;
+
+                // TODO: Don't do the char conversion every time
+                next.push(digit_to_char(carry / 64));
+                carry = carry % 64;
+            }
+            quotient = skip_leading_zeroes(&next).to_string();
+            parts.push(carry);
         }
         Ok(parts)
     }
 
-    fn to_utf8(part: &u64) -> char {
-        ::std::char::from_u32((*part + '0' as u64) as u32).unwrap()
-    }
-
     pub fn to_string(&self) -> String {
-        let prefix = match self.sign {
+        let mut prefix: String = match self.sign {
             Negative => "-".to_string(),
             Nonnegative => "".to_string(),
         };
-        let rest = self.parts.iter().rev().map(Bignum::to_utf8).collect::<String>();
-        // TODO: Trim leading zeroes in intermediate forms?
-        skip_leading_zeroes(&(prefix + &rest)).to_owned()
+        let rest = self.parts.iter().rev();
+        let mut total: u64 = 0;
+        for part in rest {
+            total = total * 64 + part;
+        }
+
+        let mut s = String::new();
+        while total > 0 {
+            s.push(digit_to_char(total % 10));
+            total = total / 10
+        }
+
+        let num_str = s.chars().rev().collect::<String>();
+        prefix.push_str(skip_leading_zeroes(&num_str));
+        prefix
     }
 /*
     pub fn karatsuba_mult(a: &Bignum, b: &Bignum) -> Bignum {
@@ -90,7 +123,7 @@ impl Bignum {
 
 #[test]
 fn type_conversion_test() {
-    let examples = vec!("0", "1", "-1", "-12345", "952892589210459282926222035");
+    let examples = vec!("0", "1", "-1", "63", "-69", "123", "-12345", "952892589210459282926222035");
     for string_rep in examples {
         let big = Bignum::from_string(string_rep).unwrap();
         assert_eq!(string_rep, big.to_string());

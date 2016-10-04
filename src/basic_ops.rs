@@ -2,10 +2,16 @@ use types::*;
 use types::Sign::*;
 use std::cmp::Ordering;
 
+// TODO: Trim leading zeroes in intermediate forms?
+
 impl Bignum {
     fn is_zero(&self) -> bool {
-        let ref parts = self.parts;
-        parts.len() == 1 && parts[0] == 0
+        for p in &self.parts {
+            if *p != 0 {
+                return false;
+            }
+        }
+        return true;
     }
     
     fn cmp_sign(&self, other: &Bignum) -> Ordering {
@@ -13,26 +19,27 @@ impl Bignum {
     }
 
     fn cmp_parts(&self, other: &Bignum) -> Ordering {
+        let (left, right) = match self.sign {
+            Nonnegative => (Ordering::Greater, Ordering::Less),
+            Negative => (Ordering::Less, Ordering::Greater),
+        };
+    
+
         let p = self.parts.len();
         let q = other.parts.len();
 
         // Assume no leading zeroes
         if p > q {
-            return Ordering::Greater;
-        } else if q < p {
-            return Ordering::Less;
+            return left;
+        } else if p < q {
+            return right;
         }
 
         // Same number of digits
         let self_digits = self.parts.iter();
         let other_digits = other.parts.iter();
         let mut zipped = self_digits.zip(other_digits).rev();
-
-        let (left, right) = match self.sign {
-            Nonnegative => (Ordering::Greater, Ordering::Less),
-            Negative => (Ordering::Less, Ordering::Greater),
-        };
-        
+    
         loop {
             match zipped.next() {
                 Some((self_digit, other_digit)) =>
@@ -130,5 +137,7 @@ fn comparison_test() {
 #[test]
 fn long_mult_test() {
     assert_eq!(try_with_strs(Bignum::long_mult, "2", "2"), "4");
+    assert_eq!(try_with_strs(Bignum::long_mult, "-2", "2"), "-4");
+    assert_eq!(try_with_strs(Bignum::long_mult, "-2", "-2"), "4");
     assert_eq!(try_with_strs(Bignum::long_mult, "123456789", "987654321"), "121932631112635269");
 }
