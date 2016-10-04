@@ -1,3 +1,5 @@
+use std::cmp;
+
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Sign {
     Nonnegative = 1,
@@ -16,6 +18,7 @@ pub struct Bignum {
 pub struct ParseBignumError;
 
 pub const BASE: u64 = 64;
+pub const BASE_STR: &'static str = "64";
 
 fn skip_leading_zeroes(s: &str) -> &str {
     let mut chars = s.chars();
@@ -45,6 +48,113 @@ fn digit_to_char(part: u64) -> char {
     ::std::char::from_u32((part + '0' as u64) as u32).unwrap()
 }
 
+fn string_add<'a, 'b>(left: &'a mut String, right: &'b str) -> &'a String {
+    let l = left.chars().collect::<Vec<char>>();
+    let r = right.chars().collect::<Vec<char>>();
+
+    let p = l.len();
+    let q = r.len();
+
+    let max = cmp::max(p, q);
+
+    let mut temp_str = String::with_capacity(max + 1);
+    let mut carry = 0;
+    for i in 1..max+1 {
+        let l_digit = if p >= i {
+            char_to_digit(l[p-i])
+        } else {
+            0
+        };
+        let r_digit = if q >= i {
+            char_to_digit(r[q-i])
+        } else {
+            0
+        };
+        let result = l_digit + r_digit + carry;
+        temp_str.push(digit_to_char(result % 10));
+        carry = result / 10;
+    }
+    if carry > 0 {
+        temp_str.push(digit_to_char(carry));
+    }
+
+    left.clone_from(&temp_str.chars().rev().collect::<String>());
+    left
+}
+
+#[test]
+fn string_add_test() {
+    assert_eq!(string_add(&mut "123".to_string(), "123"), "246");
+    assert_eq!(string_add(&mut "123".to_string(), "0"), "123");
+    assert_eq!(string_add(&mut "123".to_string(), "10000"), "10123");
+    assert_eq!(string_add(&mut "123456789".to_string(), "987654321"), "1111111110");
+}
+
+fn string_mult<'a, 'b>(left: &'a mut String, right: &'b str) -> &'a String {
+    let l = left.chars().collect::<Vec<char>>();
+    let r = right.chars().collect::<Vec<char>>();
+
+    let p = l.len();
+    let q = r.len();
+
+    let (top, bot) = if p >= q {
+        (l, r)
+    } else {
+        (r, l)
+    };
+
+    let min = cmp::min(p, q);
+    let max = cmp::max(p, q);
+
+    let mut temp_str = String::with_capacity(p + q);
+    temp_str.push('0');
+    let mut carry = 0;
+    for i in 1..min+1 {
+        // For each digit of the bottom, multiply by the top
+        let mut line_str = String::with_capacity(max + 1);
+        for j in 1..max+1 {
+            let top_digit = if max >= j {
+                char_to_digit(top[max-j])
+            } else {
+                0
+            };
+            let bot_digit = if min >= i {
+                char_to_digit(bot[min-i])
+            } else {
+                0
+            };
+            let result = top_digit * bot_digit + carry;
+            line_str.push(digit_to_char(result % 10));
+            carry = result / 10;
+        }
+
+        while carry > 0 {
+            line_str.push(digit_to_char(carry));
+            carry = carry / 10;
+        }
+        
+        line_str = line_str.chars().rev().collect::<String>();
+        // Move result forward
+        for k in 0..i-1 {
+            line_str.push('0');
+        }
+
+        string_add(&mut temp_str, &line_str);
+    }
+
+    left.clone_from(&skip_leading_zeroes(&temp_str).to_string());
+    left
+}
+
+#[test]
+fn string_mult_test() {
+    assert_eq!(string_mult(&mut "3".to_string(), "3"), "9");
+    assert_eq!(string_mult(&mut "0".to_string(), "999"), "0");
+    assert_eq!(string_mult(&mut "123".to_string(), "241"), "29643");
+    assert_eq!(string_mult(&mut "349".to_string(), "807"), "281643");
+    assert_eq!(string_mult(&mut "55555".to_string(), "66666"), "3703629630");
+}
+
 impl Bignum {
     pub fn from_string(input_str: &str) -> Result<Self, ParseBignumError> {
         if input_str.is_empty() {
@@ -69,10 +179,9 @@ impl Bignum {
         let mut parts = Vec::with_capacity(s.len());
 
         let mut quotient: String = s.to_string();
-        let mut remainder: u64 = 0; // Should be < 64
 
         while quotient != "0" {
-            // Repeated long division by 64
+            // Repeated long division by BASE
             let mut next = String::with_capacity(quotient.len());
             let mut carry = 0;
             
@@ -81,8 +190,8 @@ impl Bignum {
                 carry = carry * 10 + digit;
 
                 // TODO: Don't do the char conversion every time
-                next.push(digit_to_char(carry / 64));
-                carry = carry % 64;
+                next.push(digit_to_char(carry / BASE));
+                carry = carry % BASE;
             }
             quotient = skip_leading_zeroes(&next).to_string();
             parts.push(carry);
@@ -95,20 +204,24 @@ impl Bignum {
             Negative => "-".to_string(),
             Nonnegative => "".to_string(),
         };
+
         let rest = self.parts.iter().rev();
-        let mut total: u64 = 0;
+
+        // Repeatedly multiply by 64
+        let mut product: String = String::from("0");
+
         for part in rest {
-            total = total * 64 + part;
+            let mut next: String = String::with_capacity(2);
+            if *part > 10 {
+                next.push(digit_to_char(*part / 10));
+            }
+            next.push(digit_to_char(*part % 10));
+
+            string_mult(&mut product, BASE_STR);
+            string_add(&mut product, &next);
         }
 
-        let mut s = String::new();
-        while total > 0 {
-            s.push(digit_to_char(total % 10));
-            total = total / 10
-        }
-
-        let num_str = s.chars().rev().collect::<String>();
-        prefix.push_str(skip_leading_zeroes(&num_str));
+        prefix.push_str(&product);
         prefix
     }
 /*
