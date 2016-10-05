@@ -224,14 +224,6 @@ impl Bignum {
         prefix.push_str(&product);
         prefix
     }
-/*
-    pub fn karatsuba_mult(a: &Bignum, b: &Bignum) -> Bignum {
-        // https://en.wikipedia.org/wiki/Karatsuba_algorithm#Basic_step
-        // xy = (b^2 + b)x_1y_1 - b(x_1 - x_0)(y_1 - y_0) + (b + 1)x_0y_0
-        // where b = B^m
-        
-    }
-*/
 }
 
 #[test]
