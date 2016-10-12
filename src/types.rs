@@ -135,7 +135,7 @@ fn string_mult<'a, 'b>(left: &'a mut String, right: &'b str) -> &'a String {
         
         line_str = line_str.chars().rev().collect::<String>();
         // Move result forward
-        for k in 0..i-1 {
+        for _ in 0..i-1 {
             line_str.push('0');
         }
 
@@ -155,50 +155,50 @@ fn string_mult_test() {
     assert_eq!(string_mult(&mut "55555".to_string(), "66666"), "3703629630");
 }
 
+pub fn from_string(input_str: &str) -> Result<Bignum, ParseBignumError> {
+    if input_str.is_empty() {
+        Err(ParseBignumError)
+    }
+    else if input_str.starts_with("-") {
+        string_to_parts(&input_str[1..]).map(|parts| Bignum {
+            parts: parts,
+            sign: Negative,
+        })
+    }
+    else {
+        string_to_parts(&input_str[..]).map(|parts| Bignum {
+            parts: parts,
+            sign: Nonnegative,
+        })
+    }
+}
+
+fn string_to_parts(input_string: &str) -> Result<Vec<u64>, ParseBignumError> {
+    let s = skip_leading_zeroes(input_string);
+    let mut parts = Vec::with_capacity(s.len());
+
+    let mut quotient: String = s.to_string();
+
+    while quotient != "0" {
+        // Repeated long division by BASE
+        let mut next = String::with_capacity(quotient.len());
+        let mut carry = 0;
+        
+        for c in quotient.chars() {
+            let digit = char_to_digit(c);
+            carry = carry * 10 + digit;
+
+            // TODO: Don't do the char conversion every time
+            next.push(digit_to_char(carry / BASE));
+            carry = carry % BASE;
+        }
+        quotient = skip_leading_zeroes(&next).to_string();
+        parts.push(carry);
+    }
+    Ok(parts)
+}
+
 impl Bignum {
-    pub fn from_string(input_str: &str) -> Result<Self, ParseBignumError> {
-        if input_str.is_empty() {
-            Err(ParseBignumError)
-        }
-        else if input_str.starts_with("-") {
-            Bignum::string_to_parts(&input_str[1..]).map(|parts| Bignum {
-                parts: parts,
-                sign: Negative,
-            })
-        }
-        else {
-            Bignum::string_to_parts(&input_str[..]).map(|parts| Bignum {
-                parts: parts,
-                sign: Nonnegative,
-            })
-        }
-    }
-
-    fn string_to_parts(input_string: &str) -> Result<Vec<u64>, ParseBignumError> {
-        let s = skip_leading_zeroes(input_string);
-        let mut parts = Vec::with_capacity(s.len());
-
-        let mut quotient: String = s.to_string();
-
-        while quotient != "0" {
-            // Repeated long division by BASE
-            let mut next = String::with_capacity(quotient.len());
-            let mut carry = 0;
-            
-            for c in quotient.chars() {
-                let digit = char_to_digit(c);
-                carry = carry * 10 + digit;
-
-                // TODO: Don't do the char conversion every time
-                next.push(digit_to_char(carry / BASE));
-                carry = carry % BASE;
-            }
-            quotient = skip_leading_zeroes(&next).to_string();
-            parts.push(carry);
-        }
-        Ok(parts)
-    }
-
     pub fn to_string(&self) -> String {
         let mut prefix: String = match self.sign {
             Negative => "-".to_string(),
@@ -230,15 +230,15 @@ impl Bignum {
 fn type_conversion_test() {
     let examples = vec!("0", "1", "-1", "63", "-69", "123", "-12345", "952892589210459282926222035");
     for string_rep in examples {
-        let big = Bignum::from_string(string_rep).unwrap();
+        let big = from_string(string_rep).unwrap();
         assert_eq!(string_rep, big.to_string());
     }
 }
 
 #[test]
 fn equality_test() {
-    assert!(Bignum::from_string("123").unwrap() == Bignum::from_string("123").unwrap());
-    assert!(Bignum::from_string("123").unwrap() != Bignum::from_string("-123").unwrap());
-    assert!(Bignum::from_string("123").unwrap() != Bignum::from_string("124").unwrap());
+    assert!(from_string("123").unwrap() == from_string("123").unwrap());
+    assert!(from_string("123").unwrap() != from_string("-123").unwrap());
+    assert!(from_string("123").unwrap() != from_string("124").unwrap());
     // TODO: check for leading zeroes
 }
