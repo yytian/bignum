@@ -82,14 +82,6 @@ fn string_add<'a, 'b>(left: &'a mut String, right: &'b str) -> &'a String {
     left
 }
 
-#[test]
-fn string_add_test() {
-    assert_eq!(string_add(&mut "123".to_string(), "123"), "246");
-    assert_eq!(string_add(&mut "123".to_string(), "0"), "123");
-    assert_eq!(string_add(&mut "123".to_string(), "10000"), "10123");
-    assert_eq!(string_add(&mut "123456789".to_string(), "987654321"), "1111111110");
-}
-
 fn string_mult<'a, 'b>(left: &'a mut String, right: &'b str) -> &'a String {
     let l = left.chars().collect::<Vec<char>>();
     let r = right.chars().collect::<Vec<char>>();
@@ -144,15 +136,6 @@ fn string_mult<'a, 'b>(left: &'a mut String, right: &'b str) -> &'a String {
 
     left.clone_from(&skip_leading_zeroes(&temp_str).to_string());
     left
-}
-
-#[test]
-fn string_mult_test() {
-    assert_eq!(string_mult(&mut "3".to_string(), "3"), "9");
-    assert_eq!(string_mult(&mut "0".to_string(), "999"), "0");
-    assert_eq!(string_mult(&mut "123".to_string(), "241"), "29643");
-    assert_eq!(string_mult(&mut "349".to_string(), "807"), "281643");
-    assert_eq!(string_mult(&mut "55555".to_string(), "66666"), "3703629630");
 }
 
 pub fn from_string(input_str: &str) -> Result<Bignum, ParseBignumError> {
@@ -226,19 +209,43 @@ impl Bignum {
     }
 }
 
-#[test]
-fn type_conversion_test() {
-    let examples = vec!("0", "1", "-1", "63", "-69", "123", "-12345", "952892589210459282926222035");
-    for string_rep in examples {
-        let big = from_string(string_rep).unwrap();
-        assert_eq!(string_rep, big.to_string());
+#[cfg(test)]
+mod tests {
+    use super::string_add;
+    use super::string_mult;
+    use super::from_string;
+    
+    #[test]
+    fn string_add_test() {
+        assert_eq!(string_add(&mut "123".to_string(), "123"), "246");
+        assert_eq!(string_add(&mut "123".to_string(), "0"), "123");
+        assert_eq!(string_add(&mut "123".to_string(), "10000"), "10123");
+        assert_eq!(string_add(&mut "123456789".to_string(), "987654321"), "1111111110");
     }
-}
 
-#[test]
-fn equality_test() {
-    assert!(from_string("123").unwrap() == from_string("123").unwrap());
-    assert!(from_string("123").unwrap() != from_string("-123").unwrap());
-    assert!(from_string("123").unwrap() != from_string("124").unwrap());
-    // TODO: check for leading zeroes
+    #[test]
+    fn string_mult_test() {
+        assert_eq!(string_mult(&mut "3".to_string(), "3"), "9");
+        assert_eq!(string_mult(&mut "0".to_string(), "999"), "0");
+        assert_eq!(string_mult(&mut "123".to_string(), "241"), "29643");
+        assert_eq!(string_mult(&mut "349".to_string(), "807"), "281643");
+        assert_eq!(string_mult(&mut "55555".to_string(), "66666"), "3703629630");
+    }
+
+    #[test]
+    fn type_conversion_test() {
+        let examples = vec!("0", "1", "-1", "63", "-69", "123", "-12345", "952892589210459282926222035");
+        for string_rep in examples {
+            let big = from_string(string_rep).unwrap();
+            assert_eq!(string_rep, big.to_string());
+        }
+    }
+
+    #[test]
+    fn equality_test() {
+        assert!(from_string("123").unwrap() == from_string("123").unwrap());
+        assert!(from_string("123").unwrap() != from_string("-123").unwrap());
+        assert!(from_string("123").unwrap() != from_string("124").unwrap());
+        // TODO: check for leading zeroes
+    }
 }
