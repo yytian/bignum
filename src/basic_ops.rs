@@ -76,6 +76,12 @@ impl Ord for Bignum {
     }
 }
 
+pub fn shift_left(a: &mut Bignum, num_places: usize) {
+    let mut zeroes = vec![0; num_places];
+    zeroes.append(&mut a.parts);
+    a.parts = zeroes;
+}
+
 pub fn bignum_add(a: &Bignum, b: &Bignum) -> Bignum {
     let parts_ord = a.cmp_parts(b);
     let sign = match (&a.sign, &b.sign, parts_ord) {
@@ -139,8 +145,8 @@ pub fn bignum_add(a: &Bignum, b: &Bignum) -> Bignum {
                 0
             };
 
-            let result = if (big_digit - carry) < small_digit {
-                let temp = big_digit - carry + BASE - small_digit;
+            let result = if big_digit < (small_digit + carry) {
+                let temp = big_digit + BASE - carry - small_digit;
                 carry = 1;
                 temp
             } else {
@@ -151,7 +157,6 @@ pub fn bignum_add(a: &Bignum, b: &Bignum) -> Bignum {
             
             sum.parts.push(result);
         }
-        assert!(carry == 0);
     }
     
     sum

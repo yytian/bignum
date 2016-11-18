@@ -2,6 +2,7 @@ extern crate bignum;
 
 use bignum::types::*;
 use bignum::basic_ops::*;
+use bignum::karatsuba::*;
 use std::cmp::Ordering;
 
 fn try_with_strs(f: fn(&Bignum, &Bignum) -> Bignum, a1: &str, a2: &str) -> String {
@@ -28,6 +29,13 @@ fn comparison_test() {
 }
 
 #[test]
+fn shift_left_test() {
+    let mut b = from_string("123").unwrap();
+    shift_left(&mut b, 3); // multiply by base 3 times
+    assert_eq!(b.to_string(), "32243712");
+}
+
+#[test]
 fn bignum_add_test() {
     assert_eq!(try_with_strs(bignum_add, "123", "123"), "246");
     assert_eq!(try_with_strs(bignum_add, "123", "0"), "123");
@@ -49,4 +57,18 @@ fn long_mult_test() {
     assert_eq!(try_with_strs(bignum_long_mult, "-2", "2"), "-4");
     assert_eq!(try_with_strs(bignum_long_mult, "-2", "-2"), "4");
     assert_eq!(try_with_strs(bignum_long_mult, "123456789", "987654321"), "121932631112635269");
+}
+
+fn karatsuba_wrapper(a: &Bignum, b: &Bignum) -> Bignum {
+    bignum_karatsuba_mult(a, b, 2)
+}
+
+#[test]
+fn bignum_karatsuba_mult_test() {
+    assert_eq!(try_with_strs(karatsuba_wrapper, "2", "2"), "4");
+    assert_eq!(try_with_strs(karatsuba_wrapper, "-2", "2"), "-4");
+    assert_eq!(try_with_strs(karatsuba_wrapper, "-2", "-2"), "4");
+    assert_eq!(try_with_strs(karatsuba_wrapper, "1234", "4321"), "5332114");
+    assert_eq!(try_with_strs(karatsuba_wrapper, "123456789", "987654321"), "121932631112635269");
+    assert_eq!(try_with_strs(karatsuba_wrapper, "0", "4321"), "0");
 }

@@ -1,15 +1,69 @@
 use types::*;
 use types::Sign::*;
+use basic_ops::*;
 
-pub fn bignum_karatsuba_mult(a: &Bignum, b: &Bignum) {
+pub fn bignum_karatsuba_mult(a: &Bignum, b: &Bignum, cutoff: usize) -> Bignum {
+    let sign = match (&a.sign, &b.sign) {
+        (&Nonnegative, &Nonnegative) => Nonnegative,
+        (&Nonnegative, &Negative) => Negative,
+        (&Negative, &Nonnegative) => Negative,
+        (&Negative, &Negative) => Nonnegative,
+    };
+
+    let result = karatsuba_rec(a, b, cutoff);
+
+    Bignum {
+        sign: sign,
+        parts: result.parts,
+    }
+}
+
+fn divide_round_up(a: usize, b: usize) -> usize {
+    // http://stackoverflow.com/questions/17944/how-to-round-up-the-result-of-integer-division
+    (a - 1) / b + 1
+}
+
+fn karatsuba_rec(a: &Bignum, b: &Bignum, cutoff: usize) -> Bignum {
     // c = a_h * b_h
     // d = a_l * b_l
     // e = (a_h + a_l)(b_h + b_l) - c - d
     // ab = c * r^n + e * r^n/2 + d
 
-}
+    assert!(cutoff >= 2);
 
-#[test]
-fn bignum_karatsuba_mult_test() {
+    let p = a.parts.len();
+    let q = b.parts.len();
 
+    if p <= cutoff || q <= cutoff {
+        return bignum_long_mult(a, b);
+    }
+
+    let (a_l, a_h) = a.parts.split_at(divide_round_up(p, 2));
+    let (b_l, b_h) = b.parts.split_at(divide_round_up(q, 2));
+
+    let mut c;
+    let mut d;
+    let mut e;
+
+    {
+        let a_h_b = Bignum { sign: Nonnegative, parts: a_h.to_vec() };
+        let a_l_b = Bignum { sign: Nonnegative, parts: a_l.to_vec() };
+        let b_h_b = Bignum { sign: Nonnegative, parts: b_h.to_vec() };
+        let b_l_b = Bignum { sign: Nonnegative, parts: b_l.to_vec() };
+        c = karatsuba_rec(&a_h_b, &b_h_b, cutoff);
+        d = karatsuba_rec(&a_l_b, &b_l_b, cutoff);
+        println!("a_h_b: {}, b_h_b: {}, c: {}", a_h_b.to_string(), b_h_b.to_string(), c.to_string());
+        println!("a_l_b: {}, b_l_b: {}, d: {}", a_l_b.to_string(), b_l_b.to_string(), d.to_string());
+        e = bignum_sub(&bignum_sub(
+            &karatsuba_rec(&bignum_add(&a_h_b, &a_l_b), &bignum_add(&b_h_b, &b_l_b), cutoff),
+            &c), &d);
+    }
+
+    println!("a: {}, b: {}", a.to_string(), b.to_string());
+    println!("c: {}, d: {}, e: {}", c.to_string(), d.to_string(), e.to_string());
+
+    let shift = a_l.len() + b_l.len();
+    shift_left(&mut c, shift);
+    shift_left(&mut e, shift/2);
+    bignum_add(&c, &bignum_add(&e, &d))
 }
