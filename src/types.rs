@@ -1,6 +1,6 @@
 use std::cmp;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Sign {
     Nonnegative = 1,
     Negative = -1,
@@ -8,7 +8,7 @@ pub enum Sign {
 
 use self::Sign::*;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Bignum {
     pub parts: Vec<u64>, // Least significant digit at leftmost index
     pub sign: Sign,

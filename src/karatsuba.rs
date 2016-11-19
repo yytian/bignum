@@ -55,15 +55,10 @@ fn karatsuba_rec(a: &Bignum, b: &Bignum, cutoff: usize) -> Bignum {
         let b_l_b = Bignum { sign: Nonnegative, parts: b_l.to_vec() };
         c = karatsuba_rec(&a_h_b, &b_h_b, cutoff);
         d = karatsuba_rec(&a_l_b, &b_l_b, cutoff);
-        println!("a_h_b: {}, b_h_b: {}, c: {}", a_h_b.to_string(), b_h_b.to_string(), c.to_string());
-        println!("a_l_b: {}, b_l_b: {}, d: {}", a_l_b.to_string(), b_l_b.to_string(), d.to_string());
         e = bignum_sub(&bignum_sub(
             &karatsuba_rec(&bignum_add(&a_h_b, &a_l_b), &bignum_add(&b_h_b, &b_l_b), cutoff),
             &c), &d);
     }
-
-    println!("a: {}, b: {}", a.to_string(), b.to_string());
-    println!("c: {}, d: {}, e: {}", c.to_string(), d.to_string(), e.to_string());
 
     shift_left(&mut c, m * 2);
     shift_left(&mut e, m);
