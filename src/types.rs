@@ -195,7 +195,7 @@ impl Bignum {
 
         for part in rest {
             let mut next: String = String::with_capacity(2);
-            if *part > 10 {
+            if *part >= 10 {
                 next.push(digit_to_char(*part / 10));
             }
             next.push(digit_to_char(*part % 10));
@@ -240,6 +240,7 @@ mod tests {
             "-1",
             "63",
             "-69",
+            "11111111111111111111",
             "-952892589210459282926222035",
             "12193263132251181129",
         );
