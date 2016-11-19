@@ -1,6 +1,7 @@
 use types::*;
 use types::Sign::*;
 use basic_ops::*;
+use std::cmp;
 
 pub fn bignum_karatsuba_mult(a: &Bignum, b: &Bignum, cutoff: usize) -> Bignum {
     let sign = match (&a.sign, &b.sign) {
@@ -38,8 +39,10 @@ fn karatsuba_rec(a: &Bignum, b: &Bignum, cutoff: usize) -> Bignum {
         return bignum_long_mult(a, b);
     }
 
-    let (a_l, a_h) = a.parts.split_at(divide_round_up(p, 2));
-    let (b_l, b_h) = b.parts.split_at(divide_round_up(q, 2));
+    let m = divide_round_up(cmp::max(p, q), 2);
+
+    let (a_l, a_h) = a.parts.split_at(cmp::min(m, p));
+    let (b_l, b_h) = b.parts.split_at(cmp::min(m, q));
 
     let mut c;
     let mut d;
@@ -62,8 +65,7 @@ fn karatsuba_rec(a: &Bignum, b: &Bignum, cutoff: usize) -> Bignum {
     println!("a: {}, b: {}", a.to_string(), b.to_string());
     println!("c: {}, d: {}, e: {}", c.to_string(), d.to_string(), e.to_string());
 
-    let shift = a_l.len() + b_l.len();
-    shift_left(&mut c, shift);
-    shift_left(&mut e, shift/2);
+    shift_left(&mut c, m * 2);
+    shift_left(&mut e, m);
     bignum_add(&c, &bignum_add(&e, &d))
 }

@@ -234,7 +234,15 @@ mod tests {
 
     #[test]
     fn type_conversion_test() {
-        let examples = vec!("0", "1", "-1", "63", "-69", "123", "-12345", "952892589210459282926222035");
+        let examples = vec!(
+            "0",
+            "1",
+            "-1",
+            "63",
+            "-69",
+            "-952892589210459282926222035",
+            "12193263132251181129",
+        );
         for string_rep in examples {
             let big = from_string(string_rep).unwrap();
             assert_eq!(string_rep, big.to_string());

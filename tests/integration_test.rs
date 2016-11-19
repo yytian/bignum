@@ -60,7 +60,7 @@ fn long_mult_test() {
 }
 
 fn karatsuba_wrapper(a: &Bignum, b: &Bignum) -> Bignum {
-    bignum_karatsuba_mult(a, b, 2)
+    bignum_karatsuba_mult(a, b, 4)
 }
 
 #[test]
@@ -68,7 +68,7 @@ fn bignum_karatsuba_mult_test() {
     assert_eq!(try_with_strs(karatsuba_wrapper, "2", "2"), "4");
     assert_eq!(try_with_strs(karatsuba_wrapper, "-2", "2"), "-4");
     assert_eq!(try_with_strs(karatsuba_wrapper, "-2", "-2"), "4");
-    assert_eq!(try_with_strs(karatsuba_wrapper, "1234", "4321"), "5332114");
+    assert_eq!(try_with_strs(karatsuba_wrapper, "12345678", "87654321"), "1082152022374638");
     assert_eq!(try_with_strs(karatsuba_wrapper, "123456789", "987654321"), "121932631112635269");
-    assert_eq!(try_with_strs(karatsuba_wrapper, "0", "4321"), "0");
+    assert_eq!(try_with_strs(karatsuba_wrapper, "1234567891", "9876543219"), "12193263132251181129");
 }
