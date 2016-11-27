@@ -1,0 +1,21 @@
+
+running 4 tests
+test types::tests::equality_test ... ignored
+test types::tests::string_add_test ... ignored
+test types::tests::string_mult_test ... ignored
+test types::tests::type_conversion_test ... ignored
+
+test result: ok. 0 passed; 0 failed; 4 ignored; 0 measured
+
+
+running 7 tests
+test karatsuba_five_thousand_cutoff_fifty   ... bench:   3,806,100 ns/iter (+/- 264,360)
+test karatsuba_five_thousand_cutoff_hundred ... bench:   3,798,900 ns/iter (+/- 293,840)
+test karatsuba_thousand_cutoff_fifty        ... bench:     286,270 ns/iter (+/- 23,465)
+test karatsuba_thousand_cutoff_hundred      ... bench:     273,875 ns/iter (+/- 20,402)
+test karatsuba_thousand_cutoff_twenty       ... bench:     356,637 ns/iter (+/- 35,497)
+test long_mult_hundred                      ... bench:       5,295 ns/iter (+/- 568)
+test long_mult_thousand                     ... bench:     467,093 ns/iter (+/- 25,791)
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 7 measured
+

@@ -45,7 +45,7 @@ fn karatsuba_rec(a: &Bignum, b: &Bignum, cutoff: usize) -> Bignum {
     let (b_l, b_h) = b.parts.split_at(cmp::min(m, q));
 
     let mut c;
-    let mut d;
+    let d;
     let mut e;
 
     {
@@ -58,6 +58,8 @@ fn karatsuba_rec(a: &Bignum, b: &Bignum, cutoff: usize) -> Bignum {
         e = bignum_sub(&bignum_sub(
             &karatsuba_rec(&bignum_add(&a_h_b, &a_l_b), &bignum_add(&b_h_b, &b_l_b), cutoff),
             &c), &d);
+
+        // Falling out of this block drops the intermediate results
     }
 
     shift_left(&mut c, m * 2);
