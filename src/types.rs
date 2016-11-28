@@ -10,15 +10,18 @@ use self::Sign::*;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Bignum {
-    pub parts: Vec<u64>, // Least significant digit at leftmost index
+    pub parts: Vec<u32>, // Least significant digit at leftmost index
     pub sign: Sign,
 }
 
 #[derive(Debug)]
 pub struct ParseBignumError;
 
-pub const BASE: u64 = 64;
-pub const BASE_STR: &'static str = "64";
+// Max value of a single part
+// Needs to be less than half the max value of the integer type
+// To allow adding without overflow
+pub const BASE: u32 = 2000000000;
+pub const BASE_STR: &'static str = "2000000000";
 
 fn skip_leading_zeroes(s: &str) -> &str {
     let mut chars = s.chars();
@@ -40,12 +43,12 @@ fn skip_leading_zeroes(s: &str) -> &str {
     }
 }
 
-fn char_to_digit(c: char) -> u64 {
-    c as u64 - '0' as u64
+fn char_to_digit(c: char) -> u32 {
+    c as u32 - '0' as u32
 }
 
-fn digit_to_char(part: u64) -> char {
-    ::std::char::from_u32((part + '0' as u64) as u32).unwrap()
+fn digit_to_char(part: u32) -> char {
+    ::std::char::from_u32(part + '0' as u32).unwrap()
 }
 
 fn string_add<'a, 'b>(left: &'a mut String, right: &'b str) -> &'a String {
@@ -58,7 +61,7 @@ fn string_add<'a, 'b>(left: &'a mut String, right: &'b str) -> &'a String {
     let max = cmp::max(p, q);
 
     let mut temp_str = String::with_capacity(max + 1);
-    let mut carry = 0;
+    let mut carry: u32 = 0;
     for i in 1..max+1 {
         let l_digit = if p >= i {
             char_to_digit(l[p-i])
@@ -70,9 +73,9 @@ fn string_add<'a, 'b>(left: &'a mut String, right: &'b str) -> &'a String {
         } else {
             0
         };
-        let result = l_digit + r_digit + carry;
-        temp_str.push(digit_to_char(result % 10));
-        carry = result / 10;
+        let result: u64 = (l_digit + r_digit + carry) as u64;
+        temp_str.push(digit_to_char((result % 10) as u32));
+        carry = (result / 10) as u32;
     }
     if carry > 0 {
         temp_str.push(digit_to_char(carry));
@@ -100,7 +103,7 @@ fn string_mult<'a, 'b>(left: &'a mut String, right: &'b str) -> &'a String {
 
     let mut temp_str = String::with_capacity(p + q);
     temp_str.push('0');
-    let mut carry = 0;
+    let mut carry: u32 = 0;
     for i in 1..min+1 {
         // For each digit of the bottom, multiply by the top
         let mut line_str = String::with_capacity(max + 1);
@@ -115,9 +118,9 @@ fn string_mult<'a, 'b>(left: &'a mut String, right: &'b str) -> &'a String {
             } else {
                 0
             };
-            let result = top_digit * bot_digit + carry;
-            line_str.push(digit_to_char(result % 10));
-            carry = result / 10;
+            let result: u64 = (top_digit * bot_digit + carry) as u64;
+            line_str.push(digit_to_char((result % 10) as u32));
+            carry = (result / 10) as u32;
         }
 
         while carry > 0 {
@@ -156,7 +159,7 @@ pub fn from_string(input_str: &str) -> Result<Bignum, ParseBignumError> {
     }
 }
 
-fn string_to_parts(input_string: &str) -> Result<Vec<u64>, ParseBignumError> {
+fn string_to_parts(input_string: &str) -> Result<Vec<u32>, ParseBignumError> {
     let s = skip_leading_zeroes(input_string);
     let mut parts = Vec::with_capacity(s.len());
 
@@ -165,20 +168,27 @@ fn string_to_parts(input_string: &str) -> Result<Vec<u64>, ParseBignumError> {
     while quotient != "0" {
         // Repeated long division by BASE
         let mut next = String::with_capacity(quotient.len());
-        let mut carry = 0;
+        let mut carry: u64 = 0;
         
         for c in quotient.chars() {
             let digit = char_to_digit(c);
-            carry = carry * 10 + digit;
+            carry = carry * 10 + digit as u64;
 
             // TODO: Don't do the char conversion every time
-            next.push(digit_to_char(carry / BASE));
-            carry = carry % BASE;
+            next.push(digit_to_char((carry / BASE as u64) as u32));
+            carry = carry % BASE as u64;
         }
         quotient = skip_leading_zeroes(&next).to_string();
-        parts.push(carry);
+        parts.push(carry as u32);
     }
     Ok(parts)
+}
+
+pub fn shift_left(a: &mut Bignum, num_places: usize) {
+    // TODO: Possibly impl as a << trait?
+    let mut zeroes = vec![0; num_places];
+    zeroes.append(&mut a.parts);
+    a.parts = zeroes;
 }
 
 impl Bignum {
@@ -195,10 +205,7 @@ impl Bignum {
 
         for part in rest {
             let mut next: String = String::with_capacity(2);
-            if *part >= 10 {
-                next.push(digit_to_char(*part / 10));
-            }
-            next.push(digit_to_char(*part % 10));
+            next.push_str(&part.to_string());
 
             string_mult(&mut product, BASE_STR);
             string_add(&mut product, &next);
@@ -214,6 +221,8 @@ mod tests {
     use super::string_add;
     use super::string_mult;
     use super::from_string;
+    use super::shift_left;
+    use super::BASE_STR;
     
     #[test]
     fn string_add_test() {
@@ -240,6 +249,7 @@ mod tests {
             "-1",
             "63",
             "-69",
+            "-9877",
             "11111111111111111111",
             "-952892589210459282926222035",
             "12193263132251181129",
@@ -256,5 +266,19 @@ mod tests {
         assert!(from_string("123").unwrap() != from_string("-123").unwrap());
         assert!(from_string("123").unwrap() != from_string("124").unwrap());
         // TODO: check for leading zeroes
+    }
+
+    #[test]
+    fn shift_left_test() {
+        let num: u64 = 123;
+        let mut b = from_string(&num.to_string()).unwrap();
+        shift_left(&mut b, 3); // multiply by base 3 times
+
+        // Less ugly way to do this?
+        let mut str = num.to_string();
+        let mut once = string_mult(&mut str, BASE_STR).to_string();
+        let mut twice = string_mult(&mut once, BASE_STR).to_string();
+        let thrice = string_mult(&mut twice, BASE_STR).to_string();
+        assert_eq!(b.to_string(), thrice.to_owned());
     }
 }

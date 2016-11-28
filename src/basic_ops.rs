@@ -76,11 +76,6 @@ impl Ord for Bignum {
     }
 }
 
-pub fn shift_left(a: &mut Bignum, num_places: usize) {
-    let mut zeroes = vec![0; num_places];
-    zeroes.append(&mut a.parts);
-    a.parts = zeroes;
-}
 
 pub fn bignum_add(a: &Bignum, b: &Bignum) -> Bignum {
     let parts_ord = a.cmp_parts(b);
@@ -189,13 +184,13 @@ pub fn bignum_long_mult(a: &Bignum, b: &Bignum) -> Bignum {
     };
     
     for b_i in 0..q {
-        let mut carry = 0;
+        let mut carry: u64 = 0;
         for a_i in 0..p {
-            product.parts[a_i + b_i] += carry + a.parts[a_i] * b.parts[b_i];
-            carry = product.parts[a_i + b_i] / BASE;
-            product.parts[a_i + b_i] = product.parts[a_i + b_i] % BASE;
+            let result: u64 = product.parts[a_i + b_i] as u64 + a.parts[a_i] as u64 * b.parts[b_i] as u64 + carry;
+            carry = result / BASE as u64;
+            product.parts[a_i + b_i] = (result % BASE as u64) as u32;
         }
-        product.parts[b_i + p] += carry;
+        product.parts[b_i + p] += carry as u32;
     }
     product
 }
