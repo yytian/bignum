@@ -25,40 +25,70 @@ fn long_mult_five_thousand(bencher: &mut Bencher) {
     try_long_mult(bencher, 5000);
 }
 
-fn try_karatsuba_mult(bencher: &mut Bencher, cutoff: usize, num_nines: usize) {
+fn try_karatsuba_mult(bencher: &mut Bencher, cutoff: usize, num_nines: usize, parallel: bool) {
     let nines = std::iter::repeat("9").take(num_nines).collect::<String>();
     let a = from_string(&nines).unwrap();
     let b = a.clone();
-    bencher.iter(|| bignum_karatsuba_mult(&a, &b, cutoff));
+    bencher.iter(|| bignum_karatsuba_mult(&a, &b, cutoff, parallel));
 }
 
 #[bench]
 fn karatsuba_thousand_cutoff_twenty(bencher: &mut Bencher) {
-    try_karatsuba_mult(bencher, 20, 1000);
+    try_karatsuba_mult(bencher, 20, 1000, false);
 }
 
 #[bench]
 fn karatsuba_thousand_cutoff_fifty(bencher: &mut Bencher) {
-    try_karatsuba_mult(bencher, 50, 1000);
+    try_karatsuba_mult(bencher, 50, 1000, false);
 }
 
 #[bench]
 fn karatsuba_thousand_cutoff_hundred(bencher: &mut Bencher) {
-    try_karatsuba_mult(bencher, 100, 1000);
+    try_karatsuba_mult(bencher, 100, 1000, false);
 }
 
 #[bench]
 fn karatsuba_five_thousand_cutoff_twenty(bencher: &mut Bencher) {
-    try_karatsuba_mult(bencher, 20, 5000);
+    try_karatsuba_mult(bencher, 20, 5000, false);
 }
 
 #[bench]
 fn karatsuba_five_thousand_cutoff_fifty(bencher: &mut Bencher) {
-    try_karatsuba_mult(bencher, 50, 5000);
+    try_karatsuba_mult(bencher, 50, 5000, false);
 }
 
 #[bench]
 fn karatsuba_five_thousand_cutoff_hundred(bencher: &mut Bencher) {
-    try_karatsuba_mult(bencher, 100, 5000);
+    try_karatsuba_mult(bencher, 100, 5000, false);
+}
+
+#[bench]
+fn karatsuba_par_thousand_cutoff_twenty(bencher: &mut Bencher) {
+    try_karatsuba_mult(bencher, 20, 1000, true);
+}
+
+#[bench]
+fn karatsuba_par_thousand_cutoff_fifty(bencher: &mut Bencher) {
+    try_karatsuba_mult(bencher, 50, 1000, true);
+}
+
+#[bench]
+fn karatsuba_par_thousand_cutoff_hundred(bencher: &mut Bencher) {
+    try_karatsuba_mult(bencher, 100, 1000, true);
+}
+
+#[bench]
+fn karatsuba_par_five_thousand_cutoff_twenty(bencher: &mut Bencher) {
+    try_karatsuba_mult(bencher, 20, 5000, true);
+}
+
+#[bench]
+fn karatsuba_par_five_thousand_cutoff_fifty(bencher: &mut Bencher) {
+    try_karatsuba_mult(bencher, 50, 5000, true);
+}
+
+#[bench]
+fn karatsuba_par_five_thousand_cutoff_hundred(bencher: &mut Bencher) {
+    try_karatsuba_mult(bencher, 100, 5000, true);
 }
 

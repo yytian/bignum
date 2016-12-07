@@ -59,7 +59,11 @@ fn long_mult_test() {
 }
 
 fn karatsuba_wrapper(a: &Bignum, b: &Bignum) -> Bignum {
-    bignum_karatsuba_mult(a, b, 4)
+    bignum_karatsuba_mult(a, b, 4, false)
+}
+
+fn karatsuba_par_wrapper(a: &Bignum, b: &Bignum) -> Bignum {
+    bignum_karatsuba_mult(a, b, 4, true)
 }
 
 #[test]
@@ -67,9 +71,17 @@ fn bignum_karatsuba_mult_test() {
     assert_eq!(try_with_strs(karatsuba_wrapper, "2", "2"), "4");
     assert_eq!(try_with_strs(karatsuba_wrapper, "-2", "2"), "-4");
     assert_eq!(try_with_strs(karatsuba_wrapper, "-2", "-2"), "4");
-    assert_eq!(try_with_strs(karatsuba_wrapper, "12345678", "87654321"), "1082152022374638");
-    assert_eq!(try_with_strs(karatsuba_wrapper, "123456789", "987654321"), "121932631112635269");
     assert_eq!(try_with_strs(karatsuba_wrapper, "1234567891", "9876543219"), "12193263132251181129");
     assert_eq!(try_with_strs(karatsuba_wrapper, "3124679846169848946416687981", "4864789415649194764186476"),
+               "15200909442939435242569275059005520266618929791944956");
+}
+
+#[test]
+fn bignum_karatsuba_mult_parallel_test() {
+    assert_eq!(try_with_strs(karatsuba_par_wrapper, "2", "2"), "4");
+    assert_eq!(try_with_strs(karatsuba_par_wrapper, "-2", "2"), "-4");
+    assert_eq!(try_with_strs(karatsuba_par_wrapper, "-2", "-2"), "4");
+    assert_eq!(try_with_strs(karatsuba_par_wrapper, "1234567891", "9876543219"), "12193263132251181129");
+    assert_eq!(try_with_strs(karatsuba_par_wrapper, "3124679846169848946416687981", "4864789415649194764186476"),
                "15200909442939435242569275059005520266618929791944956");
 }
