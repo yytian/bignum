@@ -29,6 +29,25 @@ fn comparison_test() {
 }
 
 #[test]
+fn normalization_test() {
+    let parts = vec![0, 0, 1, 2, 3];
+    let mut denormalized = parts.clone();
+    for _ in 0..5 {
+        denormalized.push(0);
+    }
+    let b1 = Bignum {
+        sign: Sign::Nonnegative,
+        parts: parts,
+    };
+    let mut b2 = Bignum {
+        sign: Sign::Nonnegative,
+        parts: denormalized,
+    };
+    b2.normalize();
+    assert_eq!(b1, b2);
+}
+
+#[test]
 fn bignum_add_test() {
     assert_eq!(try_with_strs(bignum_add, "123", "123"), "246");
     assert_eq!(try_with_strs(bignum_add, "123", "0"), "123");

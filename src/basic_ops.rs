@@ -153,7 +153,8 @@ pub fn bignum_add(a: &Bignum, b: &Bignum) -> Bignum {
             sum.parts.push(result);
         }
     }
-    
+
+    sum.normalize();
     sum
 }
 
@@ -192,5 +193,7 @@ pub fn bignum_long_mult(a: &Bignum, b: &Bignum) -> Bignum {
         }
         product.parts[b_i + p] += carry as u32;
     }
+
+    product.normalize();
     product
 }

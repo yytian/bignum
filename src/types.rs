@@ -192,6 +192,21 @@ pub fn shift_left(a: &mut Bignum, num_places: usize) {
 }
 
 impl Bignum {
+    pub fn normalize(&mut self) {
+        let mut last_non_zero_index = 0;
+        let num_parts = self.parts.len();
+        for i in 0..num_parts {
+            let index_to_test = num_parts - i - 1;
+            if self.parts[index_to_test] != 0 {
+                last_non_zero_index = index_to_test;
+                break;
+            }
+        }
+        if last_non_zero_index != num_parts - 1 {
+            self.parts.truncate(last_non_zero_index + 1);
+        }
+    }
+    
     pub fn to_string(&self) -> String {
         let mut prefix: String = match self.sign {
             Negative => "-".to_string(),

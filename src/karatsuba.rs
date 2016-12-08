@@ -67,7 +67,9 @@ fn karatsuba_rec(a: &Bignum, b: &Bignum, cutoff: usize) -> Bignum {
 
     shift_left(&mut c, m * 2);
     shift_left(&mut e, m);
-    bignum_add(&c, &bignum_add(&e, &d))
+    let mut result = bignum_add(&c, &bignum_add(&e, &d));
+    result.normalize();
+    result
 }
 
 // We don't combine the two functions for perf reaons (... maybe)
@@ -115,5 +117,7 @@ fn karatsuba_rec_parallel(a: &Bignum, b: &Bignum, cutoff: usize) -> Bignum {
 
     shift_left(&mut c, m * 2);
     shift_left(&mut e, m);
-    bignum_add(&c, &bignum_add(&e, &d))
+    let mut result = bignum_add(&c, &bignum_add(&e, &d));
+    result.normalize();
+    result
 }
